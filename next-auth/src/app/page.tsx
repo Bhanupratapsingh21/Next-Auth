@@ -1,10 +1,11 @@
 'use client';
 
 import { useSession, signIn, signOut } from 'next-auth/react';
+import Link from 'next/link';
 
 export default function HomePage() {
   const { data: session } = useSession();
-
+  console.log(session);
   if (session) {
     return (
       <div>
@@ -17,7 +18,8 @@ export default function HomePage() {
   return (
     <div>
       <p>You are not signed in</p>
-      <button onClick={() => signIn()}>Sign in</button>
+      <Link href={"/Sign-In"}>SignIn</Link>
+      <Link href={"/Sign-up"}>Signup</Link>
     </div>
   );
 }
