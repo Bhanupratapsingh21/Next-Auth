@@ -18,7 +18,8 @@ export default function SignInForm() {
         password: '',
     });
 
-    const [errors, setErrors] = useState<{ identifier?: string; password?: string }>({});
+    const [errors, setErrors] = useState<{ identifier?: string; password?: string; form?: string }>({});
+    const [loading, setLoading] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -45,87 +46,127 @@ export default function SignInForm() {
             return;
         }
 
+        setLoading(true); // Show loading state during sign-in
+
         const result = await signIn('credentials', {
-            redirect: false,
+            redirect: false, // No automatic redirect
             identifier: formData.identifier,
             password: formData.password,
         });
 
+        setLoading(false); // Hide loading state after sign-in
+
         if (result?.error) {
-            if (result.error === 'CredentialsSignin') {
-                alert('Incorrect username or password');
-            } else {
-                alert('Error');
+            switch (result.error) {
+                case 'CredentialsSignin':
+                    setErrors({ form: 'Invalid username or password' });
+                    break;
+                default:
+                    setErrors({ form: 'An unexpected error occurred' });
             }
-        }
-
-        if (result?.url) {
-            router.replace('/');
+        } else {
+            router.replace('/'); // Redirect to home after successful sign-in
         }
     };
 
-    const handleProviderSignIn = async (provider: string) => {
-        await signIn(provider, { redirect: false });
-    };
 
     return (
-        <div className="flex justify-center items-center min-h-screen bg-gray-800">
-            <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
-                <form onSubmit={onSubmit} className="space-y-6">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Email/Username</label>
-                        <input
-                            name="identifier"
-                            value={formData.identifier}
-                            onChange={handleChange}
-                            className="block w-full px-3 py-2 border border-gray-300 rounded-md"
-                            placeholder="Email or Username"
-                        />
-                        {errors.identifier && (
-                            <p className="text-sm text-red-600">{errors.identifier}</p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Password</label>
-                        <input
-                            type="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            className="block w-full px-3 py-2 border border-gray-300 rounded-md"
-                            placeholder="Password"
-                        />
-                        {errors.password && (
-                            <p className="text-sm text-red-600">{errors.password}</p>
-                        )}
-                    </div>
-
-                    <button
-                        type="submit"
-                        className="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
-                    >
-                        Sign In
-                    </button>
-                </form>
-                <div className="text-center mt-4">
-                    <p>
-                        Or sign in with
-                        <button onClick={() => handleProviderSignIn('github')} className="text-blue-600 hover:text-blue-800 mx-2">
-                            GitHub
-                        </button>
-                        <button onClick={() => handleProviderSignIn('google')} className="text-blue-600 hover:text-blue-800">
-                            Google
-                        </button>
+        <>
+            <div className="flex items-center justify-center px-4 py-10 sm:px-6 sm:py-16 lg:px-8 lg:py-8">
+                <div className="xl:mx-auto bg-white  text-black xl:w-full shadow-md p-4 xl:max-w-sm 2xl:max-w-md">
+                    <h2 className="text-center text-2xl font-bold leading-tight text-black">
+                        Sign in to your account
+                    </h2>
+                    <p className="mt-2 text-center text-sm text-gray-600">
+                        Don&apos;t have an account? Create a free account
                     </p>
-                    <p>
-                        Not a member yet?{' '}
-                        <Link href="/sign-up" className="text-blue-600 hover:text-blue-800">
-                            Sign up
-                        </Link>
-                    </p>
+                    <form onSubmit={onSubmit} className="mt-8" method="POST" action="#">
+                        <div className="space-y-5">
+                            <div>
+                                <label className="text-base font-medium text-gray-900">
+                                    Email address
+                                </label>
+                                <div className="mt-2">
+                                    <input
+                                        name="identifier"
+                                        placeholder="Email"
+                                        value={formData.identifier}
+                                        onChange={handleChange}
+                                        type="email"
+                                        aria-label="Email address"
+                                        className="flex h-10 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
+                                    />
+                                </div>
+                                {errors.identifier && (
+                                    <p className="text-sm text-red-600">{errors.identifier}</p>
+                                )}
+                            </div>
+                            <div>
+                                <div className="flex items-center justify-between">
+                                    <label className="text-base font-medium text-gray-900">
+                                        Password
+                                    </label>
+                                    <a
+                                        className="text-sm font-semibold text-black hover:underline"
+                                        title="Forgot password?"
+                                        href="#"
+                                    >
+                                        Forgot password?
+                                    </a>
+                                </div>
+                                <div className="mt-2">
+                                    <input
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        placeholder="Password"
+                                        type="password"
+                                        aria-label="Password"
+                                        className="flex h-10 w-full rounded-md border  bg-transparent px-3 py-2 text-sm"
+                                    />
+                                    {errors.password && (
+                                        <p className="text-sm text-red-600">{errors.password}</p>
+                                    )}
+                                </div>
+                            </div>
+                            {errors.form && <p className="text-sm text-red-600">{errors.form}</p>}
+                            <div>
+                                <button
+                                    className="inline-flex w-full items-center justify-center rounded-md bg-black px-3.5 py-2.5 font-semibold leading-7 text-white hover:bg-black/80 disabled:opacity-50"
+                                    type="submit"
+                                    disabled={loading}
+                                >
+                                    {loading ? 'Signing in...' : 'Get started'}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                    <div className="mt-3 space-y-3">
+                        <button
+                            onClick={async () => {
+                                const result = await signIn('google', { redirect: true, callbackUrl: '/' });
+                                console.log('Google sign-in result:', result);
+                            }}
+
+                            className="relative inline-flex w-full items-center justify-center rounded-md border border-gray-400 bg-white px-3.5 py-2.5 font-semibold text-gray-700 transition-all duration-200 hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black focus:outline-none"
+                            type="button"
+                            disabled={loading}
+                        >
+
+                            Sign in with Google
+                        </button>
+                        <button
+                            onClick={() => signIn('github', { redirect: true, callbackUrl: '/' })}
+                            className="relative inline-flex w-full items-center justify-center rounded-md border border-gray-400 bg-white px-3.5 py-2.5 font-semibold text-gray-700 transition-all duration-200 hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black focus:outline-none"
+                            type="button"
+                            disabled={loading}
+                        >
+
+                            Sign in with GitHub
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 }
